@@ -1,8 +1,9 @@
-<nav class="navbar navbar-expand-lg bg-light shadow-sm" style="z-index: 444; position: fixed; top: 0; width: 100vw;">
+{% load static %}
+<nav class="navbar navbar-expand-lg bg-light shadow-sm" style="z-index: 444; position: fixed; top: 0;">
   <div class="container">
 
     <a class="navbar-brand navbar-brand-custom" href="{% url 'dashboard' %}">
-        Event<span class="brand-accent">Flow</span>
+        <img src="{% static 'images/eventflow-logo.svg' %}" alt="EventFlow" height="28">
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
       aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -17,30 +18,87 @@
           </span> -->
         </li>
       </ul>
+
       <ul class="navbar-nav d-flex align-items-center">
-        
-        <!-- role_switcher.html -->
-        <div class="role-switcher shadow-sm">
-            <form method="post" action="{% url 'switch-role' %}" class="d-inline">
-                {% csrf_token %}
-                <input type="hidden" name="next" value="{{ request.path }}">
-                <div class="input-group input-group-sm">
-                    <span class="input-group-text bg-light border-end-0">
-                        Role
-                    </span>
-                    <select name="role_id" onchange="this.form.submit()" class="form-select form-select-sm border-start-0">
-                        <option value="">Switch Role...</option>
-                        {% for role in request.user.available_roles.all %}
-                            <option value="{{ role.id }}" 
-                                {% if request.user.current_role.id == role.id %}selected{% endif %}>
-                                {{ role.name|capfirst }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
-            </form>
-        </div>
+        {% if user.is_authenticated %}
+          {% if request.user.available_roles.all.count > 1 %}
+          <!-- Role Switcher - Show when user has 2+ roles -->
+          <div class="role-switcher shadow-sm">
+              <form method="post" action="{% url 'switch-role' %}" class="d-inline">
+                  {% csrf_token %}
+                  <input type="hidden" name="next" value="{{ request.path }}">
+                  <div class="input-group input-group-sm">
+                      <span class="input-group-text bg-light border-end-0">Role</span>
+                      <select name="role_id" onchange="this.form.submit()" class="form-select form-select-sm border-start-0">
+                          <option value="">Switch Role...</option>
+                          {% for role in request.user.available_roles.all %}
+                              <option value="{{ role.id }}" {% if request.user.current_role.id == role.id %}selected{% endif %}>
+                                  {{ role.name|capfirst }}
+                              </option>
+                          {% endfor %}
+                      </select>
+                  </div>
+              </form>
+          </div>
+          {% else %}
+          <!-- Become Organizer Button - Show when user has only 1 role -->
+          <button type="button" class="btn btn-sm btn-secondary" onclick="becomeOrganizer()">
+              Become an Organizer
+          </button>
+          {% endif %}
+        {% else %}
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'user-login' %}"><i class="bi bi-box-arrow-in-right me-1"></i>Login</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'user-register' %}"><i class="bi bi-person-plus me-1"></i>Register</a>
+        </li>
+        {% endif %}
       </ul>
     </div>
   </div>
 </nav>
+
+<script>
+
+
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function becomeOrganizer() {
+    fetch('{% url "become-organizer-api" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert(data.error || 'Something went wrong');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to become organizer. Please try again.');
+    });
+}
+</script>
+<form method="post" class="d-none">{% csrf_token %}</form>

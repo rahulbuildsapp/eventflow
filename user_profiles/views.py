@@ -21,21 +21,16 @@ def user_register(request):
         if User.objects.filter(email=email).exists():
             messages.error(request, "Email already exists.")
             return redirect("user-register")
-
+        
+        # Get attendee role object first 
+        role_obj = Role.objects.get(name='attendee')
+        
         user = User.objects.create_user(
             username=username,
             email=email,
             password=password,
-            phone=request.POST.get("phone", ""),
-            profession=request.POST.get("profession", ""),
-            education=request.POST.get("education", ""),
-            goal=request.POST.get("goal", ""),
-            languages=request.POST.get("languages", ""),
-            address=request.POST.get("address", ""),
-            country=request.POST.get("country", ""),
-            current_role='attendee'
+            current_role=role_obj
         )
-        role_obj = Role.objects.get(name='attendee')
         user.available_roles.add(role_obj)
         messages.success(request, "User registered successfully. Please log in.")
         return redirect("user-login")

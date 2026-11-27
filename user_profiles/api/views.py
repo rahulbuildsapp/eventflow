@@ -1,11 +1,11 @@
-from rest_framework import generics
+from rest_framework import generics, status
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
-from ..models import CustomUser, UserRSVPHistory, Organizer
+from ..models import CustomUser, Organizer, Role
 from .serializers import (
     UserProfileSerializer,
-    UserRSVPHistorySerializer,
-    UserRSVPHistoryDetailsSerializer,
     OrganizerSerializer
 )
 
@@ -18,24 +18,6 @@ class UserProfileDetailView(generics.RetrieveAPIView):
     #     context = super().get_serializer_context()
     #     context.update({"user": self.request.user})
     #     return context
-
-
-class UserRSVPHistoryListCreateView(generics.ListCreateAPIView):
-    queryset = UserRSVPHistory.objects.all()
-    serializer_class = UserRSVPHistorySerializer
-
-    def get_queryset(self):
-        # Return RSVP history entries belonging to the authenticated user
-        return super().get_queryset().filter(user=self.request.user)
-
-
-class UserRSVPHistoryDetailView(generics.RetrieveAPIView):
-    queryset = UserRSVPHistory.objects.all()
-    serializer_class = UserRSVPHistoryDetailsSerializer
-
-    def get_queryset(self):
-        # Ensure the user can only access their own RSVP history details
-        return super().get_queryset().filter(user=self.request.user)
 
 
 class OrganizersListCreateView(generics.ListCreateAPIView):
@@ -65,3 +47,55 @@ class OrganizerDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         # Restrict to organizers owned by the requesting user
         return super().get_queryset().filter(user=self.request.user)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def become_organizer(request):
+    """
+    API endpoint to add Organizer role to user's available_roles
+    and create an Organizer profile if not exists.
+    """
+    user = request.user
+
+    try:
+        organizer_role = Role.objects.get(name='organizer')
+    except Role.DoesNotExist:
+        return Response(
+            {'error': 'Organizer role not found. Please contact admin.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    has_role = user.available_roles.filter(id=organizer_role.id).exists()
+    existing_profile = Organizer.objects.filter(user=user).first()
+
+    if has_role and existing_profile:
+        return Response({
+            'success': True,
+            'message': 'You are already an organizer!',
+        }, status=status.HTTP_200_OK)
+
+    if not has_role:
+        user.available_roles.add(organizer_role)
+
+    if not existing_profile:
+        Organizer.objects.create(
+            user=user,
+            organizer_name=user.get_full_name() or user.username,
+            organizer_email=user.email,
+            created_by=user,
+            modified_by=user,
+        )
+    elif Organizer.objects.filter(user=user).count() > 1:
+        orgs = Organizer.objects.filter(user=user).order_by('id')
+        for org in orgs[1:]:
+            org.delete()
+
+    if not user.current_role or user.current_role.name == 'attendee':
+        user.current_role = organizer_role
+        user.save(update_fields=['current_role'])
+
+    return Response({
+        'success': True,
+        'message': 'You are now an organizer!',
+    }, status=status.HTTP_200_OK)
