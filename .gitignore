@@ -10,7 +10,12 @@ command.md
 
 
 
+node_modules/
 
+# Bulk playground generated data (recreate with ./bulk/ctl.sh setup)
+bulk/venv/
+bulk/pgdata/
+bulk/media/
 
 
 

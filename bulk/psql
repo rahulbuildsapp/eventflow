@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Connect to the bulk-data playground database with the DSN already set.
+set -euo pipefail
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec "${PGBIN:-/usr/lib/postgresql/16/bin}/psql" \
+  "postgresql://${PGUSER:-rahul}@/${DBNAME:-eventflow_bulk}?host=${PGDATA:-$HERE/pgdata}&port=${PGPORT:-55432}" "$@"

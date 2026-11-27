@@ -138,3 +138,78 @@ def test_process_checkout_session_fails_when_oversold(
     # Quantity should remain untouched due to transaction atomic rollback
     ticket_event.refresh_from_db()
     assert ticket_event.quantity_available == 1
+
+
+@pytest.fixture
+def free_event(db):
+    role, _ = Role.objects.get_or_create(name='organizer')
+    host = User.objects.create_user(
+        username='free_event_host',
+        email='freehost@example.com',
+        password='testpassword',
+        current_role=role
+    )
+    host.available_roles.add(role)
+    organizer = Organizer.objects.create(
+        user=host,
+        organizer_name='Free Events Org',
+        organizer_email='freehost@example.com',
+        created_by=host,
+        is_active=True
+    )
+    return Event.objects.create(
+        organizer=organizer,
+        name='Free Community Meetup',
+        description='No paid tickets',
+        date=timezone.now() + timezone.timedelta(days=7),
+        location='Pune',
+        is_published=True,
+        is_active=True
+    )
+
+
+@pytest.mark.django_db
+def test_free_checkout_creates_ticket_without_stripe(api_client, buyer_user, free_event):
+    from qr_codes.models import QRCode
+
+    ticket = TicketType.objects.create(
+        event=free_event,
+        name='Free Pass',
+        price=0,
+        currency='INR',
+        quantity_available=10
+    )
+    api_client.force_authenticate(user=buyer_user)
+
+    response = api_client.post(
+        reverse('free-checkout'),
+        data={'tickets': [{'ticket_id': ticket.id, 'quantity': 2}]},
+        format='json'
+    )
+
+    assert response.status_code == 200
+    assert response.data['success'] is True
+    assert response.data['redirect_url'].startswith('/ticket/')
+
+    ticket.refresh_from_db()
+    assert ticket.quantity_available == 8
+
+    rsvp = RSVP.objects.get(event=free_event, attendee=buyer_user)
+    assert rsvp.ticket_qty == 2
+    assert rsvp.total_charge == 0
+    assert Transaction.objects.filter(rsvp=rsvp, payment_status='SUCCESS').exists()
+    assert QRCode.objects.filter(transaction__rsvp=rsvp).exists()
+
+
+@pytest.mark.django_db
+def test_free_rsvp_for_event_without_tickets(client, buyer_user, free_event):
+    client.force_login(buyer_user)
+
+    response = client.post(reverse('free-rsvp', args=[free_event.id]))
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload['success'] is True
+    assert payload['redirect_url'] == reverse('preview-ticket', args=[payload['ticket_id']])
+    assert TicketType.objects.filter(event=free_event, name='Free RSVP').exists()
+    assert RSVP.objects.filter(event=free_event, attendee=buyer_user).exists()

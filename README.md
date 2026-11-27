@@ -84,6 +84,7 @@ dashboard and every check-in screen filters on them.
 | Async | Celery 5.3 + beat, django-celery-results, Flower |
 | Payments | Stripe Checkout, signed webhooks, refunds |
 | Documents | WeasyPrint (tickets), segno (QR) |
+| Server-rendered UI | Django templates, Bootstrap 5 (compiled from Sass), Bootstrap Icons |
 | Frontend | React 18 + Vite + Tailwind in [`eventflow-frontend`](https://github.com/rahulbiswas24680/eventflow-frontend) |
 | Ops | Docker Compose, Nginx, Gunicorn, DigitalOcean |
 
@@ -99,6 +100,14 @@ docker compose exec web python manage.py createsuperuser
 - App: http://localhost:8000
 - Flower: http://localhost:5555
 - Redis Commander: http://localhost:8081
+
+CSS is compiled from Sass; run this after pulling (and during UI work):
+
+```bash
+npm install
+npm run build:css   # writes static/css/app.css
+npm run watch:css   # rebuild on change
+```
 
 Stripe webhooks locally:
 

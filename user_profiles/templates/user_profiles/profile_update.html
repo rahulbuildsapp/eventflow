@@ -14,13 +14,9 @@
                         
                         <!-- Profile Image -->
                         <div class="text-center mb-4">
-                            {% if request.user.image %}
-                            <img src="{{ request.user.image.url }}" alt="Profile Picture" class="rounded-circle mb-3 border"
-                                style="width: 120px; height: 120px; object-fit: cover;" id="preview-image">
-                            {% else %}
-                            <img src="{{ MEDIA_URL }}profile-transparent.png" alt="Profile Picture" class="rounded-circle mb-3 border"
-                                style="width: 120px; height: 120px; object-fit: cover;" id="preview-image">
-                            {% endif %}
+                            <img id="preview-image" class="profile-avatar mb-3"
+                                src="{% if request.user.image %}{{ request.user.image.url }}{% else %}data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Crect width='120' height='120' fill='%23fff3e3'/%3E%3Ccircle cx='60' cy='45' r='22' fill='%23f7931e'/%3E%3Cpath d='M20 110c5-22 22-34 40-34s35 12 40 34' fill='%23f7931e'/%3E%3C/svg%3E{% endif %}"
+                                alt="Profile picture">
                             <div>
                                 <label for="image" class="btn btn-outline-primary btn-sm">
                                     <i class="bi bi-camera me-1"></i>Change Photo
@@ -116,36 +112,6 @@
     </div>
 </div>
 
-
-<style>
-    .card {
-        border: none;
-        border-radius: 10px;
-    }
-    
-    .card-header {
-        border-radius: 10px 10px 0 0 !important;
-    }
-    
-    .form-control:focus {
-        border-color: var(--bs-primary);
-        box-shadow: 0 0 0 0.25rem rgba(247, 147, 30, 0.25);
-    }
-    
-    .input-group-text {
-        background-color: #f8f9fa;
-    }
-    
-    .btn-primary {
-        background-color: var(--bs-primary);
-        border-color: var(--bs-primary);
-    }
-    
-    .btn-primary:hover {
-        background-color: var(--eventflow-primary-dark);
-        border-color: var(--eventflow-primary-dark);
-    }
-</style>
 
 {% endblock %}
 

@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.http import JsonResponse
 from django.shortcuts import HttpResponse, redirect
+from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import filters, generics, permissions, status
 from rest_framework.exceptions import NotAcceptable, NotFound
@@ -77,6 +78,69 @@ class EventsCheckoutAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+class FreeCheckoutApiView(APIView):
+    """Confirm zero-price carts without going through Stripe."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        from ..services import create_free_rsvp
+
+        tickets_data = request.data.get("tickets") or []
+        if not isinstance(tickets_data, list) or not tickets_data:
+            return Response(
+                {"error": "Your cart is empty."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        results = []
+        try:
+            for item in tickets_data:
+                ticket_id = item.get("ticket_id") or item.get("id")
+                quantity = int(item.get("quantity") or 1)
+                ticket = TicketType.objects.select_related("event").get(id=ticket_id)
+
+                if ticket.price != 0:
+                    return Response(
+                        {"error": "This cart requires payment."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                rsvp, created = create_free_rsvp(
+                    request.user,
+                    ticket.event,
+                    ticket_type=ticket,
+                    quantity=quantity,
+                )
+                results.append(
+                    {
+                        "rsvp_id": rsvp.id,
+                        "ticket_id": ticket.id,
+                        "created": created,
+                    }
+                )
+        except TicketType.DoesNotExist:
+            return Response(
+                {"error": "One of the selected tickets no longer exists."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except ValueError as exc:
+            return Response(
+                {"error": str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if len(results) == 1:
+            redirect_url = reverse("preview-ticket", args=[results[0]["rsvp_id"]])
+        else:
+            redirect_url = reverse("my-rsvp-history")
+
+        return Response(
+            {"success": True, "results": results, "redirect_url": redirect_url},
+            status=status.HTTP_200_OK,
+        )
+
+
 class TransactionListCreateView(generics.ListCreateAPIView):
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
@@ -136,6 +200,12 @@ class TicketCheckoutApiView(APIView):
                 if ticket_obj.quantity_available < int(quantity):
                     return Response(
                         {"error": f"Not enough tickets available for {ticket_obj.name}. Only {ticket_obj.quantity_available} left."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                if ticket_obj.price == 0:
+                    return Response(
+                        {"error": "This order contains a free ticket. Please confirm it without payment."},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 

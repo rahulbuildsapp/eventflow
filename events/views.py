@@ -14,7 +14,7 @@ from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.text import slugify
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
@@ -38,7 +38,7 @@ def user_profile(request):
     context = {'user': user}
 
     # Check current role
-    is_organizer = hasattr(user, 'current_role') and user.current_role.name == 'organizer'
+    is_organizer = getattr(user, 'current_role', None) and user.current_role.name == 'organizer'
     context['is_organizer'] = is_organizer
 
     if is_organizer:
@@ -215,10 +215,10 @@ class OrganizerListView(LoginRequiredMixin, ListView):
 def events_home(request):
     from django.db.models import Count, Min, Q
 
-    # Publicly visible events with ticket types prefetched for price stats
+    # Publicly visible events with ticket types and images prefetched
     events = Event.objects.filter(is_published=True, is_active=True).select_related(
         'organizer'
-    ).prefetch_related('tickettype_set')
+    ).prefetch_related('tickettype_set', 'images')
 
     stats = {}
     if events:
@@ -229,7 +229,9 @@ def events_home(request):
             Q(metadata__category__isnull=True) | Q(metadata__category__exact='')
         ).values('metadata__category').distinct().count()
         stats['free_events'] = events.filter(tickettype__price=0).distinct().count()
-        min_price = events.aggregate(min=Min('tickettype__price'))['min']
+        min_price = events.filter(tickettype__price__gte=0).aggregate(
+            min=Min('tickettype__price')
+        )['min']
         stats['min_price'] = min_price if min_price is not None else 0
 
     context = {"events": events, "stats": stats}
@@ -238,7 +240,9 @@ def events_home(request):
         organizer = Organizer.objects.filter(user=request.user).first()
         if organizer:
             context["can_create_event"] = True
-            user_events = Event.objects.filter(organizer=organizer).select_related('organizer')
+            user_events = Event.objects.filter(organizer=organizer).select_related(
+                'organizer'
+            ).prefetch_related('images')
             context["user_events"] = user_events
     else:
         context["can_create_event"] = False
@@ -282,7 +286,7 @@ def all_events(request):
     page_obj = paginator.get_page(page_number)
 
     for event in page_obj:
-        tickets = list(event.tickettype_set.all())
+        tickets = list(event.tickettype_set.filter(is_system_generated=False))
         if tickets:
             prices = [t.price for t in tickets]
             min_p = min(prices)
@@ -306,10 +310,40 @@ def all_events(request):
     return render(request, 'events/all_events.html', context)
 
 
+@login_required
+def free_rsvp(request, event_id):
+    """Register for an event that has no ticket types, without Stripe."""
+    if request.method != "POST":
+        return JsonResponse({"error": "Invalid request method."}, status=405)
+
+    event = get_object_or_404(Event, id=event_id)
+    if event.tickettype_set.filter(is_system_generated=False).exists():
+        return JsonResponse(
+            {"error": "This event has tickets. Please add a ticket to your cart."},
+            status=400,
+        )
+
+    from payments.services import create_free_rsvp
+
+    try:
+        rsvp, created = create_free_rsvp(request.user, event)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+
+    return JsonResponse(
+        {
+            "success": True,
+            "created": created,
+            "ticket_id": rsvp.id,
+            "redirect_url": reverse("preview-ticket", args=[rsvp.id]),
+        }
+    )
+
+
 def event_detail(request, event_id):
     event = Event.objects.select_related('organizer').prefetch_related('images', 'tickettype_set').get(id=event_id)
     images = event.images.all()
-    tickets = event.tickettype_set.all()
+    tickets = event.tickettype_set.filter(is_system_generated=False)
 
     price_data = tickets.aggregate(min=Min('price'), max=Max('price'))
     min_price = price_data['min'] or 0
@@ -593,7 +627,12 @@ def update_event(request, pk):
                     ticket_indices.add(index)
 
             # Get existing tickets and map by ID for better update logic
-            existing_tickets = {ticket.id: ticket for ticket in TicketType.objects.filter(event=event)}
+            existing_tickets = {
+                ticket.id: ticket
+                for ticket in TicketType.objects.filter(
+                    event=event, is_system_generated=False
+                )
+            }
             existing_ticket_ids = list(existing_tickets.keys())
 
             # Update or create tickets
@@ -666,7 +705,7 @@ def update_event(request, pk):
         'event': event,
         'images': event.images.all(),
         'organizers': Organizer.objects.filter(user=request.user, is_active=True),
-        'tickets': TicketType.objects.filter(event=event)
+        'tickets': TicketType.objects.filter(event=event, is_system_generated=False)
     }
     return render(request, 'events/event_form.html', context)
 
@@ -787,7 +826,7 @@ def dashboard(request):
     months_ago_12 = (today - timedelta(days=365)).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
     # Organizer Dashboard
-    if hasattr(user_profile, 'current_role') and user_profile.current_role.name == 'organizer':
+    if getattr(user_profile, 'current_role', None) and user_profile.current_role.name == 'organizer':
         # Get organizer's events
         organized_events = Event.objects.filter(organizer__user=request.user)
 
@@ -816,10 +855,17 @@ def dashboard(request):
 
         # Get ticket type capacity per event
         ticket_capacity_subquery = TicketType.objects.filter(
-            event_id=OuterRef('id')
+            event_id=OuterRef('id'), is_system_generated=False
         ).values('event_id').annotate(
             total_capacity=Sum('quantity_available')
         ).values('total_capacity')[:1]
+
+        # Count real (non-system) tickets for capacity display
+        ticket_count_subquery = TicketType.objects.filter(
+            event_id=OuterRef('id'), is_system_generated=False
+        ).values('event_id').annotate(
+            count=Count('id')
+        ).values('count')[:1]
 
         # Get RSVP counts per event (non-cancelled registrations)
         rsvp_count_subquery = RSVP.objects.filter(
@@ -841,7 +887,8 @@ def dashboard(request):
         recent_events = organized_events.order_by('-created_at')[:5].annotate(
             capacity=Subquery(ticket_capacity_subquery),
             registered=Subquery(rsvp_count_subquery),
-            attended=Subquery(attended_count_subquery)
+            attended=Subquery(attended_count_subquery),
+            ticket_count=Subquery(ticket_count_subquery)
         )
 
         registration_data = []
@@ -853,6 +900,7 @@ def dashboard(request):
             registration_data.append({
                 'event': event.name,
                 'capacity': event.capacity or 0,
+                'has_real_tickets': (event.ticket_count or 0) > 0,
                 'registered': registered,
                 'attended': attended,
                 'conversion_rate': round(conversion_rate, 1)
@@ -1035,7 +1083,7 @@ def our_events(request):
     Organizer-only view to manage their events with pagination
     """
     # Only organizers can access this page
-    if not hasattr(request.user, 'current_role') or request.user.current_role.name != 'organizer':
+    if not getattr(request.user, 'current_role', None) or request.user.current_role.name != 'organizer':
         return HttpResponseForbidden("Only organizers can access this page.")
 
     events = Event.objects.filter(organizer__user=request.user).order_by('-created_at')
@@ -1096,14 +1144,16 @@ def our_events(request):
 
     # Get ticket capacity for all events on current page in a single query
     ticket_capacity_map = {}
+    events_with_real_tickets = set()
     if event_ids:
         ticket_totals = TicketType.objects.filter(
-            event_id__in=event_ids
+            event_id__in=event_ids, is_system_generated=False
         ).values('event_id').annotate(
             total_capacity=Sum('quantity_available')
         )
         for tc in ticket_totals:
             ticket_capacity_map[tc['event_id']] = tc['total_capacity']
+            events_with_real_tickets.add(tc['event_id'])
 
     # Add attendance stats and other properties to each event
     for event in page_obj:
@@ -1120,6 +1170,7 @@ def our_events(request):
 
         # Get max attendees from pre-fetched ticket capacity
         event.max_attendees = ticket_capacity_map.get(event.id, 0)
+        event.has_real_tickets = event.id in events_with_real_tickets
 
     context = {
         'events': page_obj,  # Use page_obj instead of events
@@ -1139,7 +1190,7 @@ def manage_attendees(request, event_id):
     event = get_object_or_404(Event, id=event_id)
 
     # Ensure the logged-in user is the organizer of this event
-    if not hasattr(request.user, 'current_role') or request.user.current_role.name != 'organizer' or event.organizer.user != request.user:
+    if not getattr(request.user, 'current_role', None) or request.user.current_role.name != 'organizer' or event.organizer.user != request.user:
         messages.error(request, "You are not authorized to manage attendees for this event.")
         return redirect('dashboard')
 
@@ -1166,7 +1217,7 @@ def dashboard_chart_data(request):
     user_profile = request.user
     chart_type = request.GET.get('chart_type', 'monthly_growth')
 
-    if hasattr(user_profile, 'current_role') and user_profile.current_role.name == 'organizer':
+    if getattr(user_profile, 'current_role', None) and user_profile.current_role.name == 'organizer':
         organized_events = Event.objects.filter(organizer__user=request.user)
 
         if chart_type == 'monthly_growth':

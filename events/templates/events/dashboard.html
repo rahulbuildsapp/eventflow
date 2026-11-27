@@ -27,7 +27,7 @@
                             <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_events }}</div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                            <i class="bi bi-calendar fs-3 text-gray-300"></i>
                         </div>
                     </div>
                 </div>
@@ -44,7 +44,7 @@
                             <div class="h5 mb-0 font-weight-bold text-gray-800">{{ active_events }}</div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-play-circle fa-2x text-gray-300"></i>
+                            <i class="bi bi-play-circle fs-3 text-gray-300"></i>
                         </div>
                     </div>
                 </div>
@@ -61,7 +61,7 @@
                             <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_attendees }}</div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                            <i class="bi bi-people fs-3 text-gray-300"></i>
                         </div>
                     </div>
                 </div>
@@ -78,7 +78,7 @@
                             <div class="h5 mb-0 font-weight-bold text-gray-800">₹{{ total_revenue }}</div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-2x text-gray-300">₹</i>
+                            <i class="bi bi-currency-rupee fs-3 text-gray-300"></i>
                         </div>
                     </div>
                 </div>
@@ -104,7 +104,7 @@
                             </div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-bullseye fa-2x text-gray-300"></i>
+                            <i class="bi bi-bullseye fs-3 text-gray-300"></i>
                         </div>
                     </div>
                 </div>
@@ -122,7 +122,7 @@
                             <small class="text-muted">{{ predicted_attendance }} of {{ upcoming_registered }} expected to attend</small>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                            <i class="bi bi-graph-up fs-3 text-gray-300"></i>
                         </div>
                     </div>
                 </div>
@@ -185,7 +185,7 @@
                                     <td class="text-truncate" style="max-width: 100px;" title="{{ data.event }}">
                                         {{ data.event }}
                                     </td>
-                                    <td class="text-center">{{ data.registered }}/{{ data.capacity }}</td>
+                                    <td class="text-center">{{ data.registered }}/{% if data.has_real_tickets %}{{ data.capacity }}{% else %}&infin;{% endif %}</td>
                                     <td class="text-center">{{ data.attended }}</td>
                                     <td class="text-center">{{ data.conversion_rate }}%</td>
                                 </tr>
@@ -293,7 +293,7 @@
                             <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_registered }}</div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-ticket-alt fa-2x text-gray-300"></i>
+                            <i class="bi bi-ticket-perforated fs-3 text-gray-300"></i>
                         </div>
                     </div>
                 </div>
@@ -310,7 +310,7 @@
                             <div class="h5 mb-0 font-weight-bold text-gray-800">{{ attended_events }}</div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                            <i class="bi bi-check-circle fs-3 text-gray-300"></i>
                         </div>
                     </div>
                 </div>
@@ -327,7 +327,7 @@
                             <div class="h5 mb-0 font-weight-bold text-gray-800">{{ upcoming_events }}</div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-calendar-plus fa-2x text-gray-300"></i>
+                            <i class="bi bi-calendar-plus fs-3 text-gray-300"></i>
                         </div>
                     </div>
                 </div>
@@ -344,7 +344,7 @@
                             <div class="h5 mb-0 font-weight-bold text-gray-800">{{ cancelled_events }}</div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-times-circle fa-2x text-gray-300"></i>
+                            <i class="bi bi-x-circle fs-3 text-gray-300"></i>
                         </div>
                     </div>
                 </div>

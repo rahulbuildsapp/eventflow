@@ -4,7 +4,7 @@ from django.views.generic import TemplateView
 from .views import (OrganizerCreateView, OrganizerDeleteView,
                     OrganizerListView, OrganizerUpdateView, about_page,
                     all_events, create_event, dashboard, event_detail,
-                    events_home, our_events, pricing_page, switch_role,
+                    events_home, free_rsvp, our_events, pricing_page, switch_role,
                     ticket_preview, dashboard_chart_data, update_event,
                     manage_attendees, user_profile)
 
@@ -27,6 +27,7 @@ attendee_urls = [
     path("", events_home, name='events-home'),
     path("events/", all_events, name='events-list'),
     path("event/<int:event_id>", event_detail, name='event-detail'),
+    path("event/<int:event_id>/rsvp/", free_rsvp, name="free-rsvp"),
     path(
         "my-rsvp/",
         login_required(TemplateView.as_view(template_name="events/my_rsvp.html")),

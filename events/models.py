@@ -91,6 +91,7 @@ class TicketType(models.Model):
     stripe_price_id = models.CharField(max_length=50, blank=True, null=True)
     quantity_available = models.PositiveIntegerField()
     discount_code = models.CharField(max_length=50, null=True, blank=True)
+    is_system_generated = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
