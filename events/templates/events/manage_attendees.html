@@ -13,10 +13,10 @@
         </div>
         <div class="btn-group">
             <a href="{% url 'our-events' %}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left me-2"></i>Back to Events
+                <i class="bi bi-arrow-left me-2"></i>Back to Events
             </a>
             <button class="btn btn-light" onclick="exportAttendees()">
-                <i class="fas fa-download me-2"></i>Export
+                <i class="bi bi-download me-2"></i>Export
             </button>
         </div>
     </div>
@@ -32,7 +32,7 @@
                             <div class="h5 mb-0 fw-bold text-gray-800" id="totalRegistered">0</div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                            <i class="bi bi-people fs-3 text-gray-300"></i>
                         </div>
                     </div>
                 </div>
@@ -47,7 +47,7 @@
                             <div class="h5 mb-0 fw-bold text-gray-800" id="attendedCount">0</div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                            <i class="bi bi-check-circle fs-3 text-gray-300"></i>
                         </div>
                     </div>
                 </div>
@@ -62,7 +62,7 @@
                             <div class="h5 mb-0 fw-bold text-gray-800" id="pendingCount">0</div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                            <i class="bi bi-clock fs-3 text-gray-300"></i>
                         </div>
                     </div>
                 </div>
@@ -77,7 +77,7 @@
                             <div class="h5 mb-0 fw-bold text-gray-800" id="attendanceRate">0%</div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                            <i class="bi bi-graph-up fs-3 text-gray-300"></i>
                         </div>
                     </div>
                 </div>
@@ -89,7 +89,7 @@
     {% if messages %}
         {% for message in messages %}
             <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'warning' %}exclamation-triangle{% elif message.tags == 'error' %}times-circle{% else %}info-circle{% endif %} me-2"></i>
+                <i class="bi bi-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'warning' %}exclamation-triangle{% elif message.tags == 'error' %}x-circle{% else %}info-circle{% endif %} me-2"></i>
                 {{ message }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
@@ -97,29 +97,35 @@
     {% endif %}
 
     <!-- Filters -->
-    <div class="card shadow mb-4">
-        <div class="card-body">
-            <div class="row g-3 align-items-center">
-                <div class="col-md-5">
-                    <input type="text" id="searchAttendees" class="form-control" placeholder="Search attendees...">
+    <div class="filter-bar mb-4">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label" for="searchAttendees">Search</label>
+                <div class="search-field">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" id="searchAttendees" class="form-control"
+                            placeholder="Search attendees...">
+                    </div>
                 </div>
-                <div class="col-md-4">
-                    <select id="statusFilter" class="form-select">
-                        <option value="">All Status</option>
-                        <option value="attended">Attended</option>
-                        <option value="registered">Registered</option>
-                        <option value="cancelled">Cancelled</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <select id="ticketFilter" class="form-select">
-                        <option value="">All Ticket Types</option>
-                        {% for ticket_type in ticket_types %}
-                        {{ ticket_type.name }}
-                            <option value="{{ ticket_type.ticket_id }}">{{ ticket_type.ticket_name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="statusFilter">Status</label>
+                <select id="statusFilter" class="form-select">
+                    <option value="">All statuses</option>
+                    <option value="attended">Attended</option>
+                    <option value="registered">Registered</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="ticketFilter">Ticket type</label>
+                <select id="ticketFilter" class="form-select">
+                    <option value="">All ticket types</option>
+                    {% for ticket_type in ticket_types %}
+                    <option value="{{ ticket_type.ticket_id }}">{{ ticket_type.ticket_name }}</option>
+                    {% endfor %}
+                </select>
             </div>
         </div>
     </div>
@@ -170,7 +176,7 @@
     </div>
 </div>
         <div id="no-attendees-message" class="text-center py-5" style="display:none;">
-            <i class="fas fa-users fa-4x text-muted mb-3"></i>
+            <i class="bi bi-people fs-1 text-muted mb-3"></i>
             <h5 class="text-muted">No attendees registered yet</h5>
             <p class="text-muted">Attendees will appear here once they register for your event.</p>
         </div>
@@ -269,16 +275,16 @@ function loadAttendees(filters = {}, page = 1) {
 
             switch (rsvp.status) {
                 case "attended":
-                    statusBadge = '<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Attended</span>';
+                    statusBadge = '<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Attended</span>';
                     break;
 
                 case "cancelled":
-                    statusBadge = '<span class="badge bg-danger"><i class="fas fa-ban me-1"></i>Cancelled</span>';
+                    statusBadge = '<span class="badge bg-danger"><i class="bi bi-slash-circle me-1"></i>Cancelled</span>';
                     break;
 
                 case "registered":
                 default:
-                    statusBadge = '<span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Registered</span>';
+                    statusBadge = '<span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>Registered</span>';
                     break;
             }
 
@@ -286,7 +292,7 @@ function loadAttendees(filters = {}, page = 1) {
                 <tr data-status="${rsvp.status}" data-ticket-type="${rsvp.ticket_type}" data-search="${rsvp.attendee_name} ${rsvp.attendee_email}">
                     <td>
                         <div class="d-flex align-items-center">
-                            <i class="fas fa-user me-3 text-muted"></i>
+                            <i class="bi bi-person me-3 text-muted"></i>
                             <div>
                                 <div class="fw-bold">${rsvp.attendee_name || "Anonymous"}</div>
                                 <small class="text-muted">ID: ${String(rsvp.id || 0).padStart(6, '0')}</small>
@@ -319,9 +325,9 @@ function loadAttendees(filters = {}, page = 1) {
                         <div class="btn-group btn-group-sm">
                             ${rsvp.status !== 'cancelled' ? `
                                 ${rsvp.status === 'attended'
-                                    ? `<button type="button" class="btn btn-outline-warning btn-update-status" data-rsvp-id="${rsvp.id}" data-action="mark_unattended" title="Mark as Unattended"><i class="fas fa-undo"></i></button>`
-                                    : `<button type="button" class="btn btn-outline-success btn-update-status" data-rsvp-id="${rsvp.id}" data-action="mark_attended" title="Mark as Attended"><i class="fas fa-check"></i></button>`}
-                                <button type="button" class="btn btn-outline-info btn-update-status" data-rsvp-id="${rsvp.id}" data-action="cancel" title="Cancel Registration"><i class="fas fa-times"></i></button>
+                                    ? `<button type="button" class="btn btn-outline-warning btn-update-status" data-rsvp-id="${rsvp.id}" data-action="mark_unattended" title="Mark as Unattended"><i class="bi bi-arrow-counterclockwise"></i></button>`
+                                    : `<button type="button" class="btn btn-outline-success btn-update-status" data-rsvp-id="${rsvp.id}" data-action="mark_attended" title="Mark as Attended"><i class="bi bi-check"></i></button>`}
+                                <button type="button" class="btn btn-outline-info btn-update-status" data-rsvp-id="${rsvp.id}" data-action="cancel" title="Cancel Registration"><i class="bi bi-x-lg"></i></button>
                             ` : ""}
                         </div>
                     </td>
@@ -359,7 +365,7 @@ $("#searchAttendees, #statusFilter, #ticketFilter").on("input change", function 
         const action = $(this).data("action");
         const btn = $(this);
 
-        btn.prop("disabled", true).html('<i class="fas fa-spinner fa-spin"></i>');
+        btn.prop("disabled", true).html('<span class="spinner-border spinner-border-sm"></span>');
 
         $.ajax({
             url: `/api/events/rsvp/${rsvpId}/update/`,
@@ -375,7 +381,7 @@ $("#searchAttendees, #statusFilter, #ticketFilter").on("input change", function 
                 showToast("error", xhr.responseJSON?.error || "Action failed");
             },
             complete: function () {
-                btn.prop("disabled", false).html('<i class="fas fa-check"></i>');
+                btn.prop("disabled", false).html('<i class="bi bi-check"></i>');
             }
         });
     });

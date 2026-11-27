@@ -130,13 +130,11 @@
     <!-- Search and Filter Section -->
     <div class="row align-items-center mb-4">
         <div class="col-md-6">
-            <div class="search-box">
+            <div class="search-field">
                 <div class="input-group">
-                    <span class="input-group-text bg-white border-end-0">
-                        <i class="bi bi-search text-muted"></i>
-                    </span>
-                    <input type="text" id="search-input" class="form-control border-start-0" 
-                           placeholder="Search organizers by name, email, or phone...">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" id="search-input" class="form-control"
+                        placeholder="Search organizers by name, email, or phone...">
                     <button class="btn btn-outline-secondary" type="button" id="clear-search">
                         Clear
                     </button>
@@ -144,17 +142,17 @@
             </div>
         </div>
         <div class="col-md-6">
-            <div class="filter-buttons justify-content-md-end">
-                <button class="btn btn-outline-primary btn-sm filter-btn active" data-filter="all">
+            <div class="filter-buttons status-filter justify-content-md-end">
+                <button class="btn btn-outline-secondary btn-sm filter-btn active" data-filter="all">
                     All
                 </button>
-                <button class="btn btn-outline-success btn-sm filter-btn" data-filter="active">
+                <button class="btn btn-outline-secondary btn-sm filter-btn" data-filter="active">
                     Active
                 </button>
                 <button class="btn btn-outline-secondary btn-sm filter-btn" data-filter="inactive">
                     Inactive
                 </button>
-                <button class="btn btn-outline-info btn-sm filter-btn" data-filter="recent">
+                <button class="btn btn-outline-secondary btn-sm filter-btn" data-filter="recent">
                     Recent
                 </button>
             </div>

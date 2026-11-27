@@ -1,104 +1,106 @@
 {% load static %}
-<nav class="navbar navbar-expand-lg bg-light shadow-sm" style="z-index: 444; position: fixed; top: 0;">
-  <div class="container">
 
-    <a class="navbar-brand navbar-brand-custom" href="{% url 'dashboard' %}">
+<nav class="navbar app-navbar" aria-label="Top navigation">
+  <div class="container-fluid px-3 px-lg-4">
+    <div class="d-flex align-items-center gap-2">
+      {% if user.is_authenticated %}
+      <button id="sidebarToggle" class="btn btn-icon btn-light border" type="button" aria-label="Toggle sidebar"
+        aria-controls="sidebar" aria-expanded="false">
+        <i class="bi bi-layout-sidebar-inset"></i>
+      </button>
+      {% endif %}
+
+      <a class="navbar-brand navbar-brand-custom m-0" href="{% url 'events-home' %}">
         <img src="{% static 'images/eventflow-logo.svg' %}" alt="EventFlow" height="28">
-    </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
-      aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-      <!-- Left side: Offers -->
-      <ul class="navbar-nav me-auto">
-        <li class="nav-item">
-          <!-- <span class="badge rounded-pill bg-warning text-dark px-3 py-2 shadow-sm">
-            🎉 Special Offer: 20% OFF today
-          </span> -->
-        </li>
-      </ul>
+      </a>
+    </div>
 
-      <ul class="navbar-nav d-flex align-items-center">
-        {% if user.is_authenticated %}
-          {% if request.user.available_roles.all.count > 1 %}
-          <!-- Role Switcher - Show when user has 2+ roles -->
-          <div class="role-switcher shadow-sm">
-              <form method="post" action="{% url 'switch-role' %}" class="d-inline">
-                  {% csrf_token %}
-                  <input type="hidden" name="next" value="{{ request.path }}">
-                  <div class="input-group input-group-sm">
-                      <span class="input-group-text bg-light border-end-0">Role</span>
-                      <select name="role_id" onchange="this.form.submit()" class="form-select form-select-sm border-start-0">
-                          <option value="">Switch Role...</option>
-                          {% for role in request.user.available_roles.all %}
-                              <option value="{{ role.id }}" {% if request.user.current_role.id == role.id %}selected{% endif %}>
-                                  {{ role.name|capfirst }}
-                              </option>
-                          {% endfor %}
-                      </select>
-                  </div>
-              </form>
-          </div>
-          {% else %}
-          <!-- Become Organizer Button - Show when user has only 1 role -->
-          <button type="button" class="btn btn-sm btn-secondary" onclick="becomeOrganizer()">
-              Become an Organizer
-          </button>
-          {% endif %}
-        {% else %}
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'user-login' %}"><i class="bi bi-box-arrow-in-right me-1"></i>Login</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'user-register' %}"><i class="bi bi-person-plus me-1"></i>Register</a>
-        </li>
+    <div class="ms-auto d-flex align-items-center gap-2">
+      {% if user.is_authenticated %}
+        {% if demo_mode %}
+        <a href="https://docs.stripe.com/testing" target="_blank" rel="noopener"
+          class="sandbox-badge text-decoration-none d-none d-sm-inline-flex" title="Sandbox: Stripe test payments only">
+          <span class="sandbox-dot" aria-hidden="true"></span> Sandbox
+        </a>
         {% endif %}
-      </ul>
+
+        {% if request.user.available_roles.all.count > 1 %}
+        <div class="role-switcher d-none d-md-block">
+          <form method="post" action="{% url 'switch-role' %}" class="d-inline">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.path }}">
+            <div class="input-group input-group-sm">
+              <span class="input-group-text">Role</span>
+              <select name="role_id" onchange="this.form.submit()" class="form-select form-select-sm"
+                aria-label="Switch role">
+                <option value="">Switch role...</option>
+                {% for role in request.user.available_roles.all %}
+                <option value="{{ role.id }}" {% if request.user.current_role.id == role.id %}selected{% endif %}>
+                  {{ role.name|capfirst }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+          </form>
+        </div>
+        {% endif %}
+
+        {% if request.user.current_role and request.user.current_role.name == 'organizer' %}
+        <a href="{% url 'create-event' %}" class="btn btn-sm btn-primary" aria-label="Create event">
+          <i class="bi bi-plus-lg"></i><span class="d-none d-sm-inline ms-1">Create Event</span>
+        </a>
+        {% elif request.user.available_roles.all.count <= 1 %}
+        <button type="button" class="btn btn-sm btn-primary d-none d-sm-inline-flex" onclick="becomeOrganizer()">
+          Become an organizer
+        </button>
+        {% endif %}
+      {% else %}
+      <a href="{% url 'user-login' %}" class="btn btn-sm btn-light border">
+        <i class="bi bi-box-arrow-in-right me-1"></i>Login
+      </a>
+      <a href="{% url 'user-register' %}" class="btn btn-sm btn-primary">
+        <i class="bi bi-person-plus me-1"></i>Get started
+      </a>
+      {% endif %}
     </div>
   </div>
 </nav>
 
 <script>
-
-
-
-function getCookie(name) {
+  function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
         }
+      }
     }
     return cookieValue;
-}
+  }
 
-function becomeOrganizer() {
+  function becomeOrganizer() {
     fetch('{% url "become-organizer-api" %}', {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': getCookie('csrftoken'),
-            'Content-Type': 'application/json'
-        }
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken'),
+        'Content-Type': 'application/json'
+      }
     })
-    .then(response => response.json())
-    .then(data => {
+      .then((response) => response.json())
+      .then((data) => {
         if (data.success) {
-            alert(data.message);
-            location.reload();
+          window.location.reload();
         } else {
-            alert(data.error || 'Something went wrong');
+          alert(data.error || 'Something went wrong');
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
+      })
+      .catch(() => {
         alert('Failed to become organizer. Please try again.');
-    });
-}
+      });
+  }
 </script>
 <form method="post" class="d-none">{% csrf_token %}</form>

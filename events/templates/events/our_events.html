@@ -14,7 +14,7 @@
         </div>
         <div>
             <a href="{% url 'create-event' %}" class="btn btn-primary">
-                <i class="fas fa-plus me-2"></i>Create New Event
+                <i class="bi bi-plus-lg me-2"></i>Create Event
             </a>
         </div>
     </div>
@@ -24,27 +24,27 @@
         <div class="card-body">
             <div class="row">
                 <div class="col-md-6">
-                    <div class="search-container position-relative">
-                        <input type="text" id="event-search" class="form-control" 
-                            placeholder="Search events..." value="{{ search_query }}">
-                        <!-- Loader -->
-                        <div id="search-loader" class="position-absolute start-0 mt-1 ms-2 d-none">
-                            <div class="spinner-border text-secondary" role="status" style="width: 1.2rem; height: 1.2rem;"></div>
+                    <div class="search-field position-relative">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" id="event-search" class="form-control"
+                                placeholder="Search your events..." value="{{ search_query }}">
+                            <span id="search-loader" class="input-group-text d-none">
+                                <span class="spinner-border spinner-border-sm text-secondary" role="status"></span>
+                            </span>
                         </div>
-                        <!-- Dropdown -->
-                        <div id="event-dropdown" class="dropdown-menu w-100 shadow-lg hide" 
-                            style="max-height: 300px; overflow-y: auto; position: absolute; inset: 0px auto auto 0px; margin: 60px 0 0; display: block; opacity: 0; pointer-events: none; transition: opacity 0.15s ease-in-out; z-index: 1000;"></div>
+                        <div id="event-dropdown" class="dropdown-menu search-dropdown-menu w-100 shadow-lg"></div>
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="btn-group float-md-end">
-                        <a href="?status=all" class="btn btn-outline-primary {% if status_filter == 'all' %}active{% endif %}" data-status="all">
+                    <div class="btn-group status-filter float-md-end" role="group" aria-label="Filter events by status">
+                        <a href="?status=all" class="btn btn-outline-secondary {% if status_filter == 'all' %}active{% endif %}" data-status="all">
                             All
                         </a>
-                        <a href="?status=active" class="btn btn-outline-success {% if status_filter == 'active' %}active{% endif %}" data-status="active">
+                        <a href="?status=active" class="btn btn-outline-secondary {% if status_filter == 'active' %}active{% endif %}" data-status="active">
                             Active
                         </a>
-                        <a href="?status=upcoming" class="btn btn-outline-info {% if status_filter == 'upcoming' %}active{% endif %}" data-status="upcoming">
+                        <a href="?status=upcoming" class="btn btn-outline-secondary {% if status_filter == 'upcoming' %}active{% endif %}" data-status="upcoming">
                             Upcoming
                         </a>
                         <a href="?status=past" class="btn btn-outline-secondary {% if status_filter == 'past' %}active{% endif %}" data-status="past">
@@ -87,7 +87,7 @@
                                 <small class="text-muted">{{ event.date|date:"M d, Y" }}</small>
                             </td>
                             <td>{{ event.location }}</td>
-                            <td>{{ event.max_attendees }}</td>
+                            <td>{% if event.has_real_tickets %}{{ event.max_attendees }}{% else %}<span class="text-muted">Unlimited</span>{% endif %}</td>
                             <td>{{ event.registered_count }}</td>
                             <td>{{ event.attended_count }}</td>
                             <td>
@@ -114,13 +114,13 @@
                             <td>
                                 <div class="btn-group btn-group-sm">
                                     <!-- <a href="{% url 'event-detail' event.id %}" class="btn btn-outline-primary" title="View">
-                                        <i class="fas fa-eye"></i>
+                                        <i class="bi bi-eye"></i>
                                     </a> -->
                                     <a href="{% url 'update-event' event.id %}" class="btn btn-outline-secondary" title="Edit">
-                                        <i class="fas fa-edit"></i>
+                                        <i class="bi bi-pencil-square"></i>
                                     </a>
                                     <a href="{% url 'event-attendees' event.id %}" class="btn btn-outline-info" title="Attendees">
-                                        <i class="fas fa-users"></i>
+                                        <i class="bi bi-people"></i>
                                     </a>
                                 </div>
                             </td>
@@ -128,7 +128,7 @@
                         {% empty %}
                         <tr>
                             <td colspan="9" class="text-center py-4">
-                                <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                                <i class="bi bi-calendar-x fs-1 text-muted mb-3"></i>
                                 <h5>No events found</h5>
                                 <p class="text-muted">Create your first event to get started</p>
                                 <a href="{% url 'create-event' %}" class="btn btn-primary">Create Event</a>
@@ -296,8 +296,8 @@ $(document).ready(function () {
                                     <div>
                                         <div class="fw-bold text-dark">${event.name}</div>
                                         <div class="text-muted small">
-                                            <i class="fas fa-calendar-alt me-1"></i>${eventDate}
-                                            <i class="fas fa-map-marker-alt ms-2 me-1"></i>${event.location || 'No location'}
+                                            <i class="bi bi-calendar-event me-1"></i>${eventDate}
+                                            <i class="bi bi-geo-alt ms-2 me-1"></i>${event.location || 'No location'}
                                         </div>
                                     </div>
                                     ${statusBadge}

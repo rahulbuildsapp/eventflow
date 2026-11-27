@@ -1,44 +1,40 @@
 {% extends 'events/base.html' %}
 {% load static %}
+{% block title %}{% if event %}Edit {{ event.name }}{% else %}Create event{% endif %} — EventFlow{% endblock %}
 
 {% block content %}
 <style>
     .card {
-        border: none;
-        border-radius: 15px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        border: 1px solid var(--eventflow-border);
+        border-radius: var(--eventflow-radius);
+        box-shadow: var(--eventflow-shadow-sm);
         overflow: hidden;
-        transition: transform 0.3s ease;
-    }
-
-    .card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
     }
 
     .card-header {
-        border-radius: 15px 15px 0 0 !important;
+        border-radius: var(--eventflow-radius) var(--eventflow-radius) 0 0 !important;
         background: linear-gradient(135deg, var(--eventflow-primary) 0%, var(--eventflow-primary-dark) 100%);
-        padding: 2rem 2.5rem;
+        padding: 1.4rem 1.75rem;
     }
 
     .card-body {
-        padding: 2.5rem;
+        padding: 1.5rem 1.75rem;
     }
 
     .section-title {
-        color: var(--eventflow-primary);
+        color: var(--eventflow-primary-dark);
         font-weight: 600;
-        border-bottom: 2px solid #e9ecef;
-        padding-bottom: 0.75rem;
-        margin-bottom: 1.5rem;
-        font-size: 1.25rem;
+        border-bottom: 1px solid var(--eventflow-border);
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
+        font-size: 1.05rem;
     }
 
     .form-label {
+        margin-bottom: 0.35rem;
+        font-size: 0.875rem;
         font-weight: 600;
-        color: #495057;
-        margin-bottom: 0.5rem;
+        color: #3f3f46;
     }
 
     .required-field::after {
@@ -47,8 +43,7 @@
     }
 
 .input-group {
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-        border-radius: 10px;
+        border-radius: 0.65rem;
         overflow: hidden;
     }
 
@@ -57,35 +52,35 @@
     }
 
     .input-group-text {
-        background-color: #f8f9fa;
-        border: none;
-        color: #F7931E;
-        font-size: 1.1rem;
-        padding: 0.75rem 1rem;
+        background-color: #f9fafb;
+        border-color: var(--eventflow-border);
+        color: var(--eventflow-primary-dark);
+        font-size: 0.95rem;
+        padding: 0.5rem 0.75rem;
     }
 
     .form-control, .form-select {
-        border: 1px solid #e9ecef;
-        padding: 0.75rem 1rem;
-        border-radius: 10px;
-        transition: all 0.3s;
+        border: 1px solid var(--eventflow-border);
+        padding: 0.5rem 0.75rem;
+        font-size: 0.925rem;
+        border-radius: 0.65rem;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
 
     .form-control:focus, .form-select:focus {
-        border-color: #F7931E;
-        box-shadow: 0 0 0 0.25rem rgba(247, 147, 30, 0.25);
-        transform: translateY(-1px);
+        border-color: var(--eventflow-primary);
+        box-shadow: 0 0 0 0.2rem rgba(247, 147, 30, 0.16);
     }
 
     .custom-file-upload {
-        border: 3px dashed #dee2e6;
-        border-radius: 15px;
-        padding: 3rem 2rem;
+        border: 2px dashed var(--eventflow-border);
+        border-radius: var(--eventflow-radius);
+        padding: 1.5rem 1rem;
         text-align: center;
         cursor: pointer;
-        transition: all 0.3s;
-        background: #f8f9fa;
-        min-height: 200px;
+        transition: border-color 0.2s ease, background 0.2s ease;
+        background: #f9fafb;
+        min-height: 140px;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -93,15 +88,14 @@
     }
 
     .custom-file-upload:hover {
-        border-color: #F7931E;
-        background-color: #f0f4ff;
-        transform: translateY(-2px);
+        border-color: var(--eventflow-primary);
+        background-color: var(--eventflow-primary-light);
     }
 
     .custom-file-upload i {
-        font-size: 4rem;
-        color: #F7931E;
-        margin-bottom: 1rem;
+        font-size: 2.5rem;
+        color: var(--eventflow-primary);
+        margin-bottom: 0.5rem;
     }
 
     .custom-file-upload p {
@@ -143,18 +137,16 @@
     }
 
     .ticket-form {
-        background: linear-gradient(to right, #f8f9fa, #ffffff);
-        border: 1px solid #e9ecef;
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
+        background: #fff;
+        border: 1px solid var(--eventflow-border);
+        border-radius: 0.85rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
         position: relative;
-        transition: all 0.3s;
     }
 
     .ticket-form:hover {
-        border-color: #F7931E;
-        box-shadow: 0 5px 15px rgba(247, 147, 30, 0.1);
+        border-color: rgba(247, 147, 30, 0.45);
     }
 
     .remove-ticket-btn {
@@ -166,23 +158,21 @@
     }
 
     .btn-primary {
-        background: linear-gradient(135deg, var(--eventflow-primary) 0%, var(--eventflow-primary-dark) 100%);
-        border: none;
-        padding: 0.75rem 2rem;
+        background: var(--eventflow-primary);
+        border-color: var(--eventflow-primary);
+        padding: 0.55rem 1.25rem;
         font-weight: 600;
-        border-radius: 10px;
-        transition: all 0.3s;
-        box-shadow: 0 4px 10px rgba(247, 147, 30, 0.3);
+        border-radius: 0.65rem;
     }
 
     .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 15px rgba(247, 147, 30, 0.4);
+        background: var(--eventflow-primary-dark);
+        border-color: var(--eventflow-primary-dark);
     }
 
     .btn-outline-secondary {
-        border-radius: 10px;
-        padding: 0.75rem 2rem;
+        border-radius: 0.65rem;
+        padding: 0.55rem 1.25rem;
         font-weight: 600;
     }
 
@@ -283,46 +273,52 @@
     }
 </style>
 
-<div class="container-md py-5">
+<div class="container py-4">
     <div class="row justify-content-center">
-        <div class="col-md-10 col-lg-9">
+        <div class="col-lg-9">
             <div class="card">
                 <!-- Header -->
                 <div class="card-header text-white text-center">
-                    <h1 class="display-6 fw-bold mb-2">
+                    <h1 class="h3 fw-bold mb-1">
                         <i class="bi bi-calendar-event me-2"></i>
-                        {% if event %}{{ title }}{% else %}Create New Event{% endif %}
+                        {% if event %}{{ title }}{% else %}Create Event{% endif %}
                     </h1>
-                    <p class="mb-0 opacity-75">
+                    <p class="mb-0 opacity-75 small">
                         {% if event %}
                         Update your event details and tickets
                         {% else %}
                         Fill in the details below to create an amazing event
                         {% endif %}
                     </p>
+                    {% if event %}
+                    <button type="submit" form="eventForm" class="btn btn-light btn-sm mt-3">
+                        <i class="bi bi-check2-circle me-1"></i>Update Event
+                    </button>
+                    {% endif %}
                 </div>
 
-                <div class="card-body p-5">
-                    {% if not event %}
-                    <div class="mb-4 px-2">
+                <div class="card-body">
+                    <div class="mb-4">
+                        {% if not event %}
                         <p class="text-muted small mb-3">
                             <i class="bi bi-info-circle me-1"></i>
                             First time? <a href="https://wa.me/{{ admin_phone }}" target="_blank" class="text-decoration-none">Chat on WhatsApp</a> — I'll set up your event in 1 hour.
                         </p>
-                        <div class="d-flex justify-content-between align-items-center">
+                        {% endif %}
+                        <div class="wizard-steps">
                             <div class="wizard-step active" data-step="1">
                                 <span class="step-number">1</span>
                                 <span class="step-label">Details</span>
                             </div>
-                            <div class="flex-grow-1 mx-3" style="height: 2px; background: #e9ecef;">
-                                <div id="step-progress-1" style="width: 0%; height: 100%; background: var(--eventflow-primary); transition: width 0.3s ease;"></div>
+                            <div class="wizard-progress">
+                                <div id="step-progress-1"></div>
                             </div>
                             <div class="wizard-step" data-step="2">
                                 <span class="step-number">2</span>
                                 <span class="step-label">Tickets</span>
                             </div>
-                            <div class="flex-grow-1 mx-3" style="height: 2px; background: #e9ecef;">
-                                <div id="step-progress-2" style="width: 0%; height: 100%; background: var(--eventflow-primary); transition: width 0.3s ease;"></div>
+                            <div class="wizard-progress">
+                                <div id="step-progress-2"></div>
                             </div>
                             <div class="wizard-step" data-step="3">
                                 <span class="step-number">3</span>
@@ -330,7 +326,6 @@
                             </div>
                         </div>
                     </div>
-                    {% endif %}
 
                     <!-- Event Stats (for editing) -->
                     {% if event %}
@@ -351,7 +346,7 @@
                     <!-- Main Form -->
                     <form method="POST" enctype="multipart/form-data" id="eventForm"
                           action="{% if event %}{% url 'update-event' event.id %}{% else %}{% url 'create-event' %}{% endif %}"
-                          class="needs-validation" novalidate>
+                          class="needs-validation" autocomplete="off" novalidate>
 
                         {% csrf_token %}
 
@@ -581,8 +576,10 @@
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label required-field">Quantity Available</label>
                                                 <input type="number" class="form-control" name="ticket_quantity_{{ forloop.counter }}"
-                                                    required min="1" placeholder="Total tickets available"
-                                                    value="{{ tkt.quantity_available|default:'' }}">
+                                                    required min="1" max="999999" step="1" autocomplete="off"
+                                                    placeholder="Total tickets available"
+                                                    value="{{ tkt.quantity_available }}">
+                                                <div class="form-text">1 – 999,999 tickets.</div>
                                             </div>
                                         </div>
                                         
@@ -645,7 +642,9 @@
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label required-field">Quantity Available</label>
                                             <input type="number" class="form-control" name="ticket_quantity_1"
-                                                required min="1" placeholder="Total tickets available">
+                                                required min="1" max="999999" step="1" autocomplete="off"
+                                                placeholder="Total tickets available">
+                                            <div class="form-text">1 – 999,999 tickets.</div>
                                         </div>
                                     </div>
                                     
@@ -724,7 +723,7 @@
                                 </button>
                             </div>
                             <div class="d-flex gap-3">
-                                <a href="{% if event %}{% url 'event-detail' event.id %}{% else %}{% url 'events-home' %}{% endif %}"
+                                <a href="{% if event %}{% url 'event-detail' event.id %}{% else %}{% url 'our-events' %}{% endif %}"
                                    class="btn btn-outline-secondary px-4">
                                     <i class="bi bi-x-circle me-1"></i>Cancel
                                 </a>
@@ -823,7 +822,6 @@
     }
 
     // Wizard navigation
-    const isNewEvent = {{ event|yesno:"false,true" }};
     let currentStep = 1;
     const totalSteps = 3;
 
@@ -847,9 +845,6 @@
         document.getElementById('prevBtn').classList.toggle('d-none', step === 1);
         document.getElementById('nextBtn').classList.toggle('d-none', step === totalSteps);
         document.getElementById('submitBtn').classList.toggle('d-none', step !== totalSteps);
-        if (!isNewEvent) {
-            document.getElementById('wizard-nav').classList.add('d-none');
-        }
     }
 
     document.getElementById('nextBtn').addEventListener('click', function() {
@@ -900,7 +895,7 @@
     });
 
     // Init
-    if (isNewEvent) showStep(1);
+    showStep(1);
 
     // Ticket functionality
     let ticketIndex = {{ tickets|length|default:1 }};
@@ -932,7 +927,9 @@
                 <div class="col-md-6 mb-3">
                     <label class="form-label required-field">Quantity Available</label>
                     <input type="number" class="form-control" name="ticket_quantity_${ticketIndex}"
-                        required min="1" placeholder="Total tickets available">
+                        required min="1" max="999999" step="1" autocomplete="off"
+                        placeholder="Total tickets available">
+                    <div class="form-text">1 – 999,999 tickets.</div>
                 </div>
             </div>
             
@@ -967,26 +964,15 @@
     });
 
     // Reset button functionality
-    document.getElementById('resetBtn').addEventListener('click', function() {
-        if (confirm('Are you sure you want to reset the form? All changes will be lost.')) {
-            document.getElementById('eventForm').reset();
-            document.getElementById('imagePreview').innerHTML = '';
-        }
-    });
-
-    document.getElementById('eventForm').addEventListener('submit', function(e) {
-        console.log('Form method:', this.method);
-        console.log('Form action:', this.action);
-        console.log('CSRF token:', document.querySelector('[name=csrfmiddlewaretoken]').value);
-        // Check form data
-        const formData = new FormData(this);
-        console.log('Form data:');
-        for (let [key, value] of formData.entries()) {
-            console.log(`  ${key}:`, value);
-        }
-        // console.log('========================');
-        // alert('Stop now!!');
-    });
+    const resetButton = document.getElementById('resetBtn');
+    if (resetButton) {
+        resetButton.addEventListener('click', function() {
+            if (confirm('Are you sure you want to reset the form? All changes will be lost.')) {
+                document.getElementById('eventForm').reset();
+                document.getElementById('imagePreview').innerHTML = '';
+            }
+        });
+    }
 
     // Form validation
     document.querySelectorAll('[required]').forEach(field => {

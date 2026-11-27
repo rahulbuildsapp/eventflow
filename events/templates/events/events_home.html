@@ -4,7 +4,9 @@
 {% block content %}
 <style>
     .hero-section {
-        background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+        background:
+            radial-gradient(circle at 20% 20%, rgba(247, 147, 30, 0.22) 0%, transparent 42%),
+            linear-gradient(135deg, #17171c 0%, #2a1a0b 55%, #8a4700 100%);
         color: white;
         padding: 5rem 2rem 4rem;
         border-radius: 20px;
@@ -18,10 +20,14 @@
         position: absolute;
         inset: 0;
         border-radius: 20px;
-        background: radial-gradient(circle at 30% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
-                    radial-gradient(circle at 70% 50%, rgba(168, 85, 247, 0.1) 0%, transparent 50%);
+        background: radial-gradient(circle at 80% 20%, rgba(247, 147, 30, 0.18) 0%, transparent 45%);
         pointer-events: none;
         clip-path: inset(0 round 20px);
+    }
+
+    .hero-section h1,
+    .hero-section p {
+        color: #fff;
     }
 
     .hero-section > * {
@@ -29,9 +35,10 @@
         z-index: 1;
     }
 
-    .hero-search-wrapper {
+    .hero-section .hero-search-wrapper {
         max-width: 600px;
         margin: 0 auto;
+        z-index: 5;
     }
 
     .hero-search-wrapper .input-group {
@@ -44,8 +51,8 @@
     }
 
     .hero-search-wrapper .input-group:focus-within {
-        border-color: rgba(255, 255, 255, 0.5);
-        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+        border-color: rgba(247, 147, 30, 0.85);
+        box-shadow: 0 0 0 3px rgba(247, 147, 30, 0.25);
     }
 
     .hero-search-wrapper .input-group-text {
@@ -146,9 +153,9 @@
     }
 
     .category-pill:hover {
-        background: rgba(99, 102, 241, 0.6);
-        border-color: rgba(99, 102, 241, 0.8);
-        color: white;
+        background: rgba(247, 147, 30, 0.85);
+        border-color: rgba(247, 147, 30, 0.95);
+        color: #1f1300;
         transform: translateY(-2px);
         text-decoration: none;
     }
@@ -232,29 +239,6 @@
         margin-bottom: 2.5rem;
     }
 
-    .stat-card {
-        background: white;
-        border-radius: 16px;
-        padding: 1.25rem;
-        text-align: center;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-        border: 1px solid #f1f3f5;
-    }
-
-    .stat-card .stat-number {
-        font-size: 1.75rem;
-        font-weight: 800;
-        color: #1e1e2f;
-        line-height: 1.2;
-    }
-
-    .stat-card .stat-label {
-        font-size: 0.8rem;
-        color: #868e96;
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
 </style>
 
 <section class="container py-3">
@@ -265,7 +249,7 @@
 
         <div class="hero-search-wrapper position-relative">
             <div class="input-group">
-                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
                 <input type="text" id="event-search" class="form-control" placeholder="Search events by name, category, or location..." autocomplete="off">
                 <div id="search-loader" class="d-none position-absolute end-0 top-50 translate-middle-y" style="right: 1rem !important;">
                     <div class="spinner-border spinner-border-sm text-white-50" role="status"></div>
@@ -289,20 +273,34 @@
     <!-- Stats Row -->
     <div class="stats-row">
         <div class="stat-card">
-            <div class="stat-number">{{ stats.total_events }}</div>
-            <div class="stat-label">Live Events</div>
+            <div>
+                <div class="stat-label">Live Events</div>
+                <div class="stat-value">{{ stats.total_events }}</div>
+            </div>
+            <div class="stat-icon"><i class="bi bi-calendar2-week"></i></div>
         </div>
         <div class="stat-card">
-            <div class="stat-number">{{ stats.category_count }}</div>
-            <div class="stat-label">Categories</div>
+            <div>
+                <div class="stat-label">Categories</div>
+                <div class="stat-value">{{ stats.category_count }}</div>
+            </div>
+            <div class="stat-icon info"><i class="bi bi-tags"></i></div>
         </div>
         <div class="stat-card">
-            <div class="stat-number">{{ stats.free_events }}</div>
-            <div class="stat-label">Free Entry</div>
+            <div>
+                <div class="stat-label">Free Entry</div>
+                <div class="stat-value">{{ stats.free_events }}</div>
+            </div>
+            <div class="stat-icon success"><i class="bi bi-ticket-perforated"></i></div>
         </div>
         <div class="stat-card">
-            <div class="stat-number">{% if stats.min_price == 0 %}Free{% else %}₹{{ stats.min_price|floatformat:0 }}{% endif %}</div>
-            <div class="stat-label">Starting From</div>
+            <div>
+                <div class="stat-label">Starting From</div>
+                <div class="stat-value">
+                    {% if stats.min_price == 0 %}Free{% else %}₹{{ stats.min_price|floatformat:0 }}{% endif %}
+                </div>
+            </div>
+            <div class="stat-icon warning"><i class="bi bi-currency-rupee"></i></div>
         </div>
     </div>
 
@@ -321,18 +319,20 @@
         <div class="carousel-inner">
             {% for event in events|slice:":5" %}
             <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                {% if event.images.all %}
-                    <img src="{{ event.images.first.image.url }}" class="d-block w-100 carousel-image" alt="{{ event.name }}">
+                {% with image=event.images.all|first %}
+                {% if image %}
+                    <img src="{{ image.image.url }}" class="d-block w-100 carousel-image" alt="{{ event.name }}">
                 {% else %}
                     <img src="https://images.pexels.com/photos/15448073/pexels-photo-15448073.jpeg" class="d-block w-100 carousel-image" alt="{{ event.name }}">
                 {% endif %}
+                {% endwith %}
                 <div class="carousel-caption">
                     <span class="badge bg-white text-dark mb-2">{{ event.metadata.category|default:"Event" }}</span>
                     <h3 class="mb-1 fw-bold">{{ event.name }}</h3>
                     <p class="mb-2 opacity-75 d-none d-md-block">{{ event.description|truncatewords:25 }}</p>
                     <div class="d-flex align-items-center gap-3 mb-2 small">
-                        <span><i class="fas fa-calendar-alt me-1"></i>{{ event.date|date:"M j, Y" }}</span>
-                        <span><i class="fas fa-map-marker-alt me-1"></i>{{ event.location|truncatechars:25 }}</span>
+                        <span><i class="bi bi-calendar-event me-1"></i>{{ event.date|date:"M j, Y" }}</span>
+                        <span><i class="bi bi-geo-alt me-1"></i>{{ event.location|truncatechars:25 }}</span>
                     </div>
                     <a href="{% url 'event-detail' event.id %}" class="btn btn-light btn-sm rounded-pill px-4">View Details</a>
                 </div>
@@ -409,11 +409,11 @@
 
                     <div class="mb-3 small text-muted">
                         <div class="d-flex align-items-center mb-1">
-                            <i class="fas fa-calendar-alt text-primary me-2" style="width: 14px;"></i>
+                            <i class="bi bi-calendar-event text-primary me-2" style="width: 14px;"></i>
                             <span>{{ event.date|date:"M j, Y, g:i a" }}</span>
                         </div>
                         <div class="d-flex align-items-center">
-                            <i class="fas fa-map-marker-alt text-danger me-2" style="width: 14px;"></i>
+                            <i class="bi bi-geo-alt text-danger me-2" style="width: 14px;"></i>
                             <span>{{ event.location|truncatechars:30 }}</span>
                         </div>
                     </div>
@@ -525,10 +525,10 @@
                                             <div class="d-flex align-items-center gap-2 mt-1">
                                                 <span class="badge bg-primary bg-opacity-10 text-primary fw-normal" style="font-size: 0.65rem;">${cat}</span>
                                                 <span class="text-muted" style="font-size: 0.75rem;">
-                                                    <i class="fas fa-map-marker-alt me-1"></i>${event.location || 'Unknown'}
+                                                    <i class="bi bi-geo-alt me-1"></i>${event.location || 'Unknown'}
                                                 </span>
                                                 <span class="text-muted" style="font-size: 0.75rem;">
-                                                    <i class="fas fa-calendar-alt me-1"></i>${new Date(event.date).toLocaleDateString('en-US', {month: 'short', day: 'numeric'})}
+                                                    <i class="bi bi-calendar-event me-1"></i>${new Date(event.date).toLocaleDateString('en-US', {month: 'short', day: 'numeric'})}
                                                 </span>
                                             </div>
                                         </div>

@@ -1,198 +1,91 @@
-
 {% load static %}
 {% load nav_extras %}
 
-
-<style>
-
-.sidebar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: 100vh;
-  width: var(--sidebar-width);
-  background-color: #1C1C21 !important;
-  overflow-y: auto;
-  transition: width 0.3s ease;
-  z-index: 1030;
-}
-
-.logo-short {
-  display: none;
-}
-
-.logo-full {
-  display: inline-block;
-}
-
-.navbar-brand-custom {
-  transition: all 0.3s ease;
-}
-
-body.sidebar-collapsed .logo-full {
-  display: none;
-}
-
-body.sidebar-collapsed .logo-short {
-  display: inline-block;
-  font-size: 1.8rem;
-  font-weight: 800;
-  color: var(--eventflow-primary);
-}
-
-body.sidebar-collapsed .navbar-brand-custom {
-  width: 100%;
-  text-align: center;
-  padding: 0;
-  margin: 10px 0;
-}
-
-body.sidebar-collapsed .sidebar-text {
-  display: none;
-}
-
-body.sidebar-collapsed .nav-link {
-  justify-content: center;
-  padding: 12px;
-}
-
-.sidebar .nav-link i {
-  font-size: 1.4rem;
-  min-width: 24px;
-  text-align: center;
-  color: #fff;
-}
-
-.sidebar .nav-link:hover,
-.sidebar .nav-link.active {
-  background-color: rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
-}
-
-body.sidebar-collapsed .nav-link i {
-  margin: 0;
-}
-
-@media (max-width: 992px) {
-  #sidebar {
-    width: 80px !important;
-  }
-  #sidebar .sidebar-text {
-    display: none !important;
-  }
-  #sidebar .logo-full {
-    display: none !important;
-  }
-  #sidebar .logo-short {
-    display: inline-block !important;
-  }
-  #sidebar .navbar-brand-custom {
-    width: 100%;
-    text-align: center;
-    padding: 0;
-    margin: 10px 0;
-  }
-  #sidebar .nav-link {
-    justify-content: center;
-    padding: 12px;
-  }
-}
-
-</style>
-
-<div id="sidebar" class="sidebar d-flex flex-column flex-shrink-0 p-3 text-bg-dark">
-  <a class="navbar-brand navbar-brand-custom mx-auto my-3 d-flex justify-content-center" href="{% url 'dashboard' %}">
-    <img src="{% static 'images/eventflow-logo.svg' %}" alt="EventFlow" height="32" class="logo-full">
-    <span class="logo-short">EF</span>
+<aside id="sidebar" class="app-sidebar" aria-label="Sidebar">
+  <a class="sidebar-brand" href="{% url 'dashboard' %}" aria-label="EventFlow home">
+    <img src="{% static 'images/eventflow-logo.svg' %}" alt="EventFlow" class="logo-full">
+    <span class="logo-short" aria-hidden="true">EF</span>
   </a>
-  {% if request.user.current_role.name == 'organizer' %}
-  <ul class="nav nav-pills flex-column mb-auto">
-    <li class="nav-item">
-      <a href="{% url 'dashboard' %}" class="nav-link text-white {% if request.path|startswith:'/dashboard' %}active{% endif %}">
-        <i class="bi bi-speedometer2"></i>
-        <span class="sidebar-text">Dashboard</span>
-      </a>
-    </li>
 
-    <li>
-      <a href="{% url 'our-events' %}" class="nav-link text-white {% if request.path|startswith:'events' %}active{% endif %}">
-        <i class="bi bi-calendar-event"></i>
-        <span class="sidebar-text">Our Events</span>
-      </a>
-    </li>
-
-    <li>
-      <a href="{% url 'organizers-list' %}"
-        class="nav-link text-white {% if request.path|startswith:'/organizers' %}active{% endif %}">
-        <i class="bi bi-people-fill"></i>
-        <span class="sidebar-text">Organizers</span>
-      </a>
-    </li>
-
-    <li>
-      <a href="{% url 'user-profile' %}"
-        class="nav-link text-white {% if request.path|startswith:'/profile' %}active{% endif %}">
-        <i class="bi bi-person-fill"></i>
-        <span class="sidebar-text">Profile</span>
-      </a>
-    </li>
-  </ul>
-  {% else %}
-  <ul class="nav nav-pills flex-column mb-auto">
-    <li class="nav-item">
-      <a href="{% url 'dashboard' %}" class="nav-link text-white {% if request.path|startswith:'/dashboard' %}active{% endif %}">
-        <i class="bi bi-speedometer2"></i>
-        <span class="sidebar-text">Dashboard</span>
-      </a>
-    </li>
-    <li class="nav-item">
-      <a href="{% url 'events-home' %}" class="nav-link text-white {% if request.path|startswith:'/event' %}active{% endif %}">
-        <i class="bi bi-binoculars"></i>
-        <span class="sidebar-text">Explore Events</span>
-      </a>
-    </li>
-    <li>
-      <a href="{% url 'my-rsvp-history' %}"
-        class="nav-link text-white {% if request.path|startswith:'/my-rsvp' %}active{% endif %}">
-        <i class="bi bi-ticket-perforated-fill"></i>
-        <span class="sidebar-text">My Events</span>
-      </a>
-    </li>
-    <li>
-      <a href="{% url 'user-profile' %}"
-        class="nav-link text-white {% if request.path|startswith:'/profile' %}active{% endif %}">
-        <i class="bi bi-person-fill"></i>
-        <span class="sidebar-text">Profile</span>
-      </a>
-    </li>
-  </ul>
-  {% endif %}
-  <hr>
-  <div class="dropdown">
-    <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle"
-      data-bs-toggle="dropdown" aria-expanded="false">
-      <img src="https://github.com/mdo.png" alt="" width="32" height="32" class="rounded-circle me-2">
-      <strong class="sidebar-text">{{ request.user.username }}</strong>
+  <nav class="sidebar-nav">
+    {% if request.user.current_role and request.user.current_role.name == 'organizer' %}
+    <a href="{% url 'dashboard' %}"
+      class="nav-link {% if request.path|startswith:'/dashboard' %}active{% endif %}">
+      <i class="bi bi-speedometer2"></i>
+      <span class="sidebar-text">Dashboard</span>
     </a>
-    <ul class="dropdown-menu dropdown-menu-dark text-small shadow">
-      {% if not request.user.is_authenticated %}
-        <li><a class="dropdown-item" href="{% url 'user-register' %}"><i class="bi bi-plus-circle me-2"></i>Register</a></li>
-        <li><a class="dropdown-item" href="{% url 'user-login' %}"><i class="bi bi-gear-fill me-2"></i>Login</a></li>
-      {% else %}
-        <li><a class="dropdown-item" href="{% url 'user-logout' %}">Logout</a></li>
-      {% endif %}
-    </ul>
+    <a href="{% url 'our-events' %}"
+      class="nav-link {% if request.path|startswith:'/our-events' %}active{% endif %}">
+      <i class="bi bi-calendar-event"></i>
+      <span class="sidebar-text">Our Events</span>
+    </a>
+    <a href="{% url 'events-list' %}"
+      class="nav-link {% if request.path|startswith:'/events/' %}active{% endif %}">
+      <i class="bi bi-binoculars"></i>
+      <span class="sidebar-text">Explore Events</span>
+    </a>
+    <a href="{% url 'organizers-list' %}"
+      class="nav-link {% if request.path|startswith:'/organizers' %}active{% endif %}">
+      <i class="bi bi-people"></i>
+      <span class="sidebar-text">Organizers</span>
+    </a>
+    <a href="{% url 'user-profile' %}"
+      class="nav-link {% if request.path|startswith:'/profile' %}active{% endif %}">
+      <i class="bi bi-person"></i>
+      <span class="sidebar-text">Profile</span>
+    </a>
+    {% else %}
+    <a href="{% url 'dashboard' %}"
+      class="nav-link {% if request.path|startswith:'/dashboard' %}active{% endif %}">
+      <i class="bi bi-speedometer2"></i>
+      <span class="sidebar-text">Dashboard</span>
+    </a>
+    <a href="{% url 'events-home' %}"
+      class="nav-link {% if request.path == '/' or request.path|startswith:'/event' %}active{% endif %}">
+      <i class="bi bi-binoculars"></i>
+      <span class="sidebar-text">Explore Events</span>
+    </a>
+    <a href="{% url 'my-rsvp-history' %}"
+      class="nav-link {% if request.path|startswith:'/my-rsvp' %}active{% endif %}">
+      <i class="bi bi-ticket-perforated"></i>
+      <span class="sidebar-text">My Tickets</span>
+    </a>
+    <a href="{% url 'user-profile' %}"
+      class="nav-link {% if request.path|startswith:'/profile' %}active{% endif %}">
+      <i class="bi bi-person"></i>
+      <span class="sidebar-text">Profile</span>
+    </a>
+    {% endif %}
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="dropdown">
+      <a href="#" class="sidebar-user dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+        {% if request.user.image %}
+        <img src="{{ request.user.image.url }}" alt="{{ request.user.username }}">
+        {% else %}
+        <span class="sidebar-avatar" aria-hidden="true">{{ request.user.username|first|upper }}</span>
+        {% endif %}
+        <span class="sidebar-text text-truncate">
+          <strong class="d-block small">{{ request.user.get_full_name|default:request.user.username }}</strong>
+          <span class="sidebar-role">{{ request.user.current_role.name|capfirst|default:"Attendee" }}</span>
+        </span>
+      </a>
+      <ul class="dropdown-menu dropdown-menu-dark shadow w-100">
+        <li>
+          <a class="dropdown-item" href="{% url 'user-profile' %}">
+            <i class="bi bi-person me-2"></i>Profile
+          </a>
+        </li>
+        <li>
+          <hr class="dropdown-divider">
+        </li>
+        <li>
+          <a class="dropdown-item" href="{% url 'user-logout' %}">
+            <i class="bi bi-box-arrow-right me-2"></i>Logout
+          </a>
+        </li>
+      </ul>
+    </div>
   </div>
-</div>
-
-
-<script>
-  $(document).ready(function () {
-    var currentUrl = window.location.href;
-    $('.nav-link').each(function () {
-      if ($(this).attr('href') === currentUrl) {
-        $(this).addClass('active');
-      }
-    });
-  });
-</script>
+</aside>

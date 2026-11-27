@@ -2,6 +2,7 @@ from django.urls import path
 
 from .views import (
     EventsCheckoutAPIView,
+    FreeCheckoutApiView,
     TransactionListCreateView,
     TransactionDetailView,
     TicketCheckoutApiView,
@@ -21,6 +22,7 @@ urlpatterns = [
          name='transaction-detail'
          ),
     path('ticket-checkout-session/', TicketCheckoutApiView.as_view(), name='ticket_payment'),
+    path('free-checkout/', FreeCheckoutApiView.as_view(), name='free-checkout'),
     path("webhook/stripe/", stripe_webhook, name="stripe-webhook"),
     path("transaction-qr/", transaction_qr, name="transaction-qr")
 

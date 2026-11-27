@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.http import JsonResponse
 from django.shortcuts import HttpResponse, redirect
+from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import filters, generics, permissions, status
 from rest_framework.exceptions import NotAcceptable, NotFound
@@ -77,6 +78,69 @@ class EventsCheckoutAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+class FreeCheckoutApiView(APIView):
+    """Confirm zero-price carts without going through Stripe."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        from ..services import create_free_rsvp
+
+        tickets_data = request.data.get("tickets") or []
+        if not isinstance(tickets_data, list) or not tickets_data:
+            return Response(
+                {"error": "Your cart is empty."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        results = []
+        try:
+            for item in tickets_data:
+                ticket_id = item.get("ticket_id") or item.get("id")
+                quantity = int(item.get("quantity") or 1)
+                ticket = TicketType.objects.select_related("event").get(id=ticket_id)
+
+                if ticket.price != 0:
+                    return Response(
+                        {"error": "This cart requires payment."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                rsvp, created = create_free_rsvp(
+                    request.user,
+                    ticket.event,
+                    ticket_type=ticket,
+                    quantity=quantity,
+                )
+                results.append(
+                    {
+                        "rsvp_id": rsvp.id,
+                        "ticket_id": ticket.id,
+                        "created": created,
+                    }
+                )
+        except TicketType.DoesNotExist:
+            return Response(
+                {"error": "One of the selected tickets no longer exists."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except ValueError as exc:
+            return Response(
+                {"error": str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if len(results) == 1:
+            redirect_url = reverse("preview-ticket", args=[results[0]["rsvp_id"]])
+        else:
+            redirect_url = reverse("my-rsvp-history")
+
+        return Response(
+            {"success": True, "results": results, "redirect_url": redirect_url},
+            status=status.HTTP_200_OK,
+        )
+
+
 class TransactionListCreateView(generics.ListCreateAPIView):
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
@@ -132,6 +196,18 @@ class TicketCheckoutApiView(APIView):
                     ticket_obj = TicketType.objects.get(id=ticket_id)
                 except TicketType.DoesNotExist:
                     raise NotFound(f"Ticket with id {ticket_id} not found.")
+
+                if ticket_obj.quantity_available < int(quantity):
+                    return Response(
+                        {"error": f"Not enough tickets available for {ticket_obj.name}. Only {ticket_obj.quantity_available} left."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                if ticket_obj.price == 0:
+                    return Response(
+                        {"error": "This order contains a free ticket. Please confirm it without payment."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
 
                 if not ticket_obj.stripe_price_id:
                     return Response(
@@ -190,7 +266,7 @@ class TicketCheckoutApiView(APIView):
 def stripe_webhook(request):
     """
     Stripe webhook handler - now delegates to Celery task for async processing.
-    
+
     Instead of processing everything synchronously (which blocks and can timeout),
     we queue the task and return immediately. This ensures:
     - Fast webhook response (< 50ms vs ~2s)
@@ -198,7 +274,7 @@ def stripe_webhook(request):
     - Background processing handles QR, RSVP, email
     """
     from ..tasks import process_checkout_session
-    
+
     payload = request.body
     sig_header = request.META.get("HTTP_STRIPE_SIGNATURE")
     event = None
@@ -221,18 +297,18 @@ def stripe_webhook(request):
 
         if not user_id:
             return HttpResponse(status=400)
-        
+
         try:
             get_user_model().objects.get(id=user_id)
         except Exception:
             return HttpResponse(status=400)
-        
+
         # Update transaction with payment_intent from Stripe
         if payment_intent:
             Transaction.objects.filter(session_id=session_id).update(
                 transaction_id=payment_intent
             )
-        
+
         process_checkout_session.delay(session_id)
 
     return HttpResponse(status=200)
@@ -243,7 +319,7 @@ def transaction_qr(request):
     API endpoint to get QR code URL for a transaction by session_id.
     """
     from qr_codes.models import QRCode
-    
+
     session_id = request.GET.get("session_id")
     if not session_id:
         return JsonResponse({"error": "session_id required"}, status=400)

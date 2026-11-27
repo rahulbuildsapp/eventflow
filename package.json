@@ -1,0 +1,28 @@
+{
+  "name": "eventflow",
+  "version": "1.0.0",
+  "description": "**Paid ticketing for organizers — where the money and the inventory have to agree.**",
+  "main": "index.js",
+  "scripts": {
+    "build:css": "sass --load-path=node_modules --quiet-deps assets/scss/main.scss static/css/app.css --style=compressed --no-source-map",
+    "watch:css": "sass --load-path=node_modules --quiet-deps --watch assets/scss/main.scss static/css/app.css",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rahulbiswas24680/eventflow.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/rahulbiswas24680/eventflow/issues"
+  },
+  "homepage": "https://github.com/rahulbiswas24680/eventflow#readme",
+  "devDependencies": {
+    "bootstrap": "^5.3.3",
+    "playwright-core": "^1.65.1",
+    "sass": "^1.77.8"
+  }
+}
